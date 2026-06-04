@@ -553,4 +553,11 @@
   ::after {
     pointer-events: none;
   }
+
+  /**
+  * Vue 내의 container 기본 세팅
+  */
+  #app {
+    height: 100%;
+  }
 }
