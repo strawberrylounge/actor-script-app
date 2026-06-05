@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { selectedScene, userCharacter } from '../composables/useScriptStore'
 import type { ChatMessage, ScriptLine } from '../types/script'
@@ -7,10 +7,10 @@ import type { ChatMessage, ScriptLine } from '../types/script'
 const router = useRouter()
 
 onMounted(() => {
-  if (!selectedScene.value || !userCharacter.value) {
-    router.replace('/')
-    return
-  }
+  // if (!selectedScene.value || !userCharacter.value) {
+  //   router.replace('/')
+  //   return
+  // }
   initConversation()
 })
 
@@ -53,12 +53,9 @@ function initConversation() {
     (l: ScriptLine) => l.character !== userCharacter.value
   )
   if (firstAiLine) {
-    messages.value = [
-      {
-        role: 'assistant',
-        content: `${firstAiLine.character}: ${firstAiLine.text}`,
-      },
-    ]
+    const content = `${firstAiLine.character}: ${firstAiLine.text}`
+    messages.value = [{ role: 'assistant', content }]
+    speak(content)
   }
 }
 
@@ -87,6 +84,7 @@ async function sendMessage() {
 
     const data = await res.json()
     messages.value.push({ role: 'assistant', content: data.reply })
+    speak(data.reply)
   } catch {
     messages.value.push({ role: 'assistant', content: '(응답을 받지 못했어요. 다시 시도해주세요.)' })
   } finally {
@@ -106,12 +104,65 @@ function onKeydown(e: KeyboardEvent) {
     sendMessage()
   }
 }
+
+// TTS
+const isTtsEnabled = ref(true)
+
+function speak(text: string) {
+  if (!isTtsEnabled.value) return
+  window.speechSynthesis.cancel()
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'ko-KR'
+  utterance.rate = 0.95
+  window.speechSynthesis.speak(utterance)
+}
+
+// Voice recognition
+const SpeechRecognitionAPI = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition
+const isRecording = ref(false)
+let recognition: InstanceType<typeof SpeechRecognitionAPI> | null = null
+
+function toggleRecording() {
+  if (!SpeechRecognitionAPI) {
+    alert('이 브라우저는 음성 인식을 지원하지 않아요. Chrome을 사용해주세요.')
+    return
+  }
+  if (isRecording.value) {
+    recognition?.stop()
+    return
+  }
+  recognition = new SpeechRecognitionAPI()
+  recognition.lang = 'ko-KR'
+  recognition.continuous = true
+  recognition.interimResults = false
+
+  recognition.onresult = (e: any) => {
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        userInput.value += e.results[i][0].transcript
+      }
+    }
+  }
+  recognition.onstart = () => { isRecording.value = true }
+  recognition.onend = () => { isRecording.value = false }
+  recognition.onerror = () => { isRecording.value = false }
+
+  recognition.start()
+}
+
+onUnmounted(() => {
+  recognition?.stop()
+  window.speechSynthesis.cancel()
+})
 </script>
 
 <template>
   <div class="practice-view">
     <div class="top-bar">
       <button class="back-btn" @click="router.push('/scene')">← 씬 선택</button>
+      <button class="tts-btn" :class="{ off: !isTtsEnabled }" @click="isTtsEnabled = !isTtsEnabled">
+        {{ isTtsEnabled ? '🔊' : '🔇' }}
+      </button>
       <div class="scene-info">
         <span class="scene-name">{{ selectedScene?.title }}</span>
         <span class="my-char">나: {{ userCharacter }}</span>
@@ -143,6 +194,9 @@ function onKeydown(e: KeyboardEvent) {
         @keydown="onKeydown"
         :disabled="isLoading"
       />
+      <button class="mic-btn" :class="{ recording: isRecording }" @click="toggleRecording" :disabled="isLoading">
+        {{ isRecording ? '■' : '🎙' }}
+      </button>
       <button class="send-btn" @click="sendMessage" :disabled="!userInput.trim() || isLoading">
         전송
       </button>
@@ -174,6 +228,17 @@ function onKeydown(e: KeyboardEvent) {
   border-radius: 6px;
 }
 .back-btn:hover { color: #e8e8e8; border-color: #555; }
+
+.tts-btn {
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.tts-btn:hover { border-color: #555; }
+.tts-btn.off { opacity: 0.4; }
 
 .scene-info {
   display: flex;
@@ -259,6 +324,29 @@ function onKeydown(e: KeyboardEvent) {
 }
 .input:focus { outline: none; border-color: #7c6aff; }
 .input:disabled { opacity: 0.5; }
+
+.mic-btn {
+  background: #1e1e1e;
+  color: #e8e8e8;
+  padding: 0.75rem 1rem;
+  border: 1px solid #333;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s;
+}
+.mic-btn:not(:disabled):hover { border-color: #555; }
+.mic-btn.recording {
+  background: #3a1a1a;
+  border-color: #e05;
+  color: #ff3366;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 
 .send-btn {
   background: #7c6aff;

@@ -38,7 +38,7 @@ $colors: (
   "coral-pink": #f04d69,
   "purple": #7c6aff,
 
-  bg-gray: #f7f8f9
+  bg-gray: #f6f8fa
 );
 
 // colors
@@ -80,8 +80,6 @@ $line-height: 160% !default;
 	Path
 ============================================================= */
 // img path
-$url: "/online/";
+$url: "/assets/";
 $img: $url + "images/";
-$img-common: $img + "common/";
-$img-icon: $img-common + "icons/";
-$img-course: $img + "course/";
+$img-icon: $img + "icons/";

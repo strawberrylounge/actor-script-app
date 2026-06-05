@@ -29,6 +29,7 @@
     "vercel": "^54.4.1",
     "vite": "^8.0.8",
     "vite-plugin-vue-devtools": "^8.1.1",
+    "vite-svg-loader": "^5.1.1",
     "vue-tsc": "^3.2.6"
   },
   "engines": {

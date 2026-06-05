@@ -2,6 +2,7 @@
 @use "./abstracts";
 
 /* import reset */
+@use "./base/animation";
 @use "./base/reset";
 @use "./base/typography";
 @use "./base/utilities";

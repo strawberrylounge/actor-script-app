@@ -1,8 +1,12 @@
 <script setup lang="ts">
   import { ref } from "vue";
   import { useRouter } from "vue-router";
+
   import * as pdfjsLib from "pdfjs-dist";
+
   import { scenes } from "../composables/useScriptStore";
+
+  import IconUpload from "../assets/svg/icon-upload.svg";
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -72,41 +76,46 @@
 </script>
 
 <template>
-  <div class="upload-container">
-    <div class="upload-guide text-center">
-      <h1>대본 연습</h1>
-      <p class="subtitle mt4 text-gray400 font-body-xs">
-        PDF 대본을 업로드하면 AI 상대 배우와 연습할 수 있어요
-      </p>
+  <div class="page-upload">
+    <div class="upload-container">
+      <h1>파일 업로드</h1>
+      <!-- <p class="subtitle">PDF 대본을 업로드하면 AI 상대 배우와 연습할 수 있어요</p> -->
+
+      <div class="drop-zone" :class="{ dragging: isDragging, loading: isLoading }">
+        <label
+          @dragover.prevent="isDragging = true"
+          @dragleave="isDragging = false"
+          @drop.prevent="onDrop"
+        >
+          <input
+            type="file"
+            accept=".pdf,application/pdf"
+            @change="onFileInput"
+            :disabled="isLoading"
+            hidden
+          />
+        </label>
+
+        <div class="drop-content">
+          <div v-if="isLoading">
+            <div class="spinner"></div>
+            <p>대본을 분석하는 중...</p>
+          </div>
+          <div v-else>
+            <IconUpload class="icon-upload" aria-hidden="true" />
+            <p class="drop-label">파일을 여기에 드래그하거나 클릭해서 선택</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="hints">
+        <p v-if="error" class="error text-center">{{ error }}</p>
+        <div v-else class="upload-guide">
+          <p>pdf 파일만 업로드 가능해요.</p>
+          <p>최대 0MB</p>
+        </div>
+      </div>
     </div>
-
-    <label
-      class="drop-zone"
-      :class="{ dragging: isDragging, loading: isLoading }"
-      @dragover.prevent="isDragging = true"
-      @dragleave="isDragging = false"
-      @drop.prevent="onDrop"
-    >
-      <input
-        type="file"
-        accept=".pdf,application/pdf"
-        @change="onFileInput"
-        :disabled="isLoading"
-        hidden
-      />
-
-      <div v-if="isLoading" class="drop-content">
-        <div class="spinner" />
-        <p>대본을 분석하는 중...</p>
-      </div>
-      <div v-else class="drop-content">
-        <div class="upload-icon">📄</div>
-        <p class="drop-label">PDF를 여기에 드래그하거나 클릭해서 선택</p>
-        <p class="drop-hint">screenplay, 희곡, 방송 대본 등</p>
-      </div>
-    </label>
-
-    <p v-if="error" class="error">{{ error }}</p>
   </div>
 </template>
 
