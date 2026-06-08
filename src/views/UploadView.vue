@@ -119,6 +119,6 @@
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
   @use "../assets/scss/pages/upload.scss";
 </style>
