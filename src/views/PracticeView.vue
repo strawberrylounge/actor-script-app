@@ -1,11 +1,19 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
   import { useRouter } from "vue-router";
+
   import { selectedScene, userCharacter } from "../composables/useScriptStore";
   import { createSession, updateSession } from "../composables/useSessionHistory";
+
   import PracticeSidebar from "../components/PracticeSidebar.vue";
+
   import type { ChatMessage, ScriptLine } from "../types/script";
   import type { Session } from "../types/session";
+
+  import IconMic from "../assets/svg/icon-mic.svg";
+  import IconPause from "../assets/svg/icon-pause.svg";
+  import IconSound from "../assets/svg/icon-sound.svg";
+  import IconSoundOff from "../assets/svg/icon-sound-off.svg";
 
   const router = useRouter();
 
@@ -165,9 +173,15 @@ ${scriptContext}
         }
       }
     };
-    recognition.onstart = () => { isRecording.value = true; };
-    recognition.onend = () => { isRecording.value = false; };
-    recognition.onerror = () => { isRecording.value = false; };
+    recognition.onstart = () => {
+      isRecording.value = true;
+    };
+    recognition.onend = () => {
+      isRecording.value = false;
+    };
+    recognition.onerror = () => {
+      isRecording.value = false;
+    };
 
     recognition.start();
   }
@@ -179,7 +193,7 @@ ${scriptContext}
 </script>
 
 <template>
-  <div class="practice-layout">
+  <div class="page-practice">
     <PracticeSidebar
       :current-session-id="currentSessionId"
       :can-start-new="canStartNew"
@@ -187,52 +201,81 @@ ${scriptContext}
       @new="startNewSession"
     />
 
-    <div class="practice-main">
-      <div class="top-bar">
-        <button class="back-btn" @click="router.push('/scene')">← 씬 선택</button>
-        <button class="tts-btn" :class="{ off: !isTtsEnabled }" @click="isTtsEnabled = !isTtsEnabled">
-          {{ isTtsEnabled ? "🔊" : "🔇" }}
-        </button>
+    <div class="practice-content">
+      <div class="practice-content__top">
         <div class="scene-info">
-          <span class="scene-name">{{ selectedScene?.title }}</span>
-          <span class="my-char">나: {{ userCharacter }}</span>
+          <span class="scene-title">테스트</span>
+          <!-- <span class="scene-name">{{ selectedScene?.title }}</span> -->
+          <!-- <span class="my-char">나: {{ userCharacter }}</span> -->
         </div>
-      </div>
-
-      <div class="chat" ref="chatEl">
-        <div v-for="(msg, i) in messages" :key="i" class="message" :class="msg.role">
-          <div class="bubble">{{ msg.content }}</div>
-        </div>
-        <div v-if="isLoading" class="message assistant">
-          <div class="bubble typing"><span /><span /><span /></div>
-        </div>
-      </div>
-
-      <div class="input-area">
-        <textarea
-          v-model="userInput"
-          class="input"
-          :placeholder="`${userCharacter} 대사를 입력하세요...`"
-          rows="2"
-          @keydown="onKeydown"
-          :disabled="isLoading"
-        />
         <button
-          class="mic-btn"
-          :class="{ recording: isRecording }"
-          @click="toggleRecording"
-          :disabled="isLoading"
+          type="button"
+          class="btn-icon btn-tts"
+          :class="{ off: !isTtsEnabled }"
+          @click="isTtsEnabled = !isTtsEnabled"
         >
-          {{ isRecording ? "■" : "🎙" }}
+          <IconSound v-if="isTtsEnabled" />
+          <IconSoundOff v-else />
         </button>
-        <button class="send-btn" @click="sendMessage" :disabled="!userInput.trim() || isLoading">
-          전송
-        </button>
+      </div>
+
+      <div class="practice-content__bottom">
+        <div class="chat-area" ref="chatEl">
+          <!-- <div v-for="(msg, i) in messages" :key="i" class="message" :class="msg.role">
+            <div class="bubble">{{ msg.content }}</div>
+          </div> -->
+
+          <div class="message">
+            <div class="bubble">테스트 테스트 테스트</div>
+          </div>
+          <div class="message user">
+            <div class="bubble">test test test</div>
+          </div>
+
+          <div class="message assistant" v-if="isLoading">
+            <div class="bubble typing">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-area">
+          <textarea
+            v-model="userInput"
+            class="input"
+            :placeholder="`${userCharacter} 대사를 입력하세요...`"
+            rows="2"
+            @keydown="onKeydown"
+            :disabled="isLoading"
+          ></textarea>
+          <div class="btns">
+            <button
+              type="button"
+              class="btn-record"
+              :class="{ recording: isRecording }"
+              @click="toggleRecording"
+              :disabled="isLoading"
+            >
+              <IconPause v-if="isRecording" />
+              <IconMic v-else />
+            </button>
+            <button
+              type="button"
+              class="btn-send"
+              @click="sendMessage"
+              :disabled="!userInput.trim() || isLoading"
+            >
+              전송
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
   @use "../assets/scss/pages/practice";
 </style>

@@ -9,11 +9,11 @@ $position: (
   "l": "left",
   "r": "right",
   "t": "top",
-  "b": bottom,
+  "b": bottom
 );
 $name-map: (
   "m": "margin",
-  "p": "padding",
+  "p": "padding"
 );
 @mixin generate($name-map: (), $position: (), $sizes: ()) {
   @each $pre-key, $pre-value in $name-map {
